@@ -63,9 +63,18 @@ local function GetClosestPlayer()
 end
 
 local function BackpackChanged(child, PlayerForRemoved)
+    if child == nil or child.Parent == nil then
+        if PlayerForRemoved == nil then
+            return
+        end
+    end
+    if not child:IsA("Tool") then
+        return
+    end
     if child ~= nil and child.Parent ~= nil and child.Parent:IsA("Model") then
         PlayerForRemoved = game.Players:FindFirstChild(child.Parent.Name)
     end
+    wait()
     local ContrabandFound = false
     local Level = 0
     local Player = PlayerForRemoved or child.Parent.Parent
@@ -93,13 +102,10 @@ local function BackpackChanged(child, PlayerForRemoved)
             Level = 4
         end
     end
-    --print(ContrabandFound, Player)
     if ContrabandFound and Markers[Player.Name] ~= nil then
-        --print("changed color of existing marker")
         Markers[Player.Name].Visible = true
         Markers[Player.Name].TextColor3 = LevelColors[Level]
-    elseif ContrabandFound and Markers[child.Name] == nil then
-        --print("created a marker for "..Player.Name)
+    elseif ContrabandFound and Markers[child.Name] == nil and Player.Character ~= nil then
         --[[
         local box = Instance.new("BoxHandleAdornment")
         box.Parent = Player.Character.HumanoidRootPart
@@ -111,7 +117,7 @@ local function BackpackChanged(child, PlayerForRemoved)
         box.Color3 = LevelColors[Level]
         --]]
         
-        local billgui = Instance.new('BillboardGui', Player.Character.Torso)
+        local billgui = Instance.new('BillboardGui', Player.Character:WaitForChild("Torso",120))
         local textlab = Instance.new('TextLabel', billgui)
 
         billgui.Name = "ContrabandGUI"
@@ -145,25 +151,36 @@ local function BackpackChanged(child, PlayerForRemoved)
 end
 
 local function CharacterAdded(child)
-    local Player = game.Players:FindFirstChild(child.Name)
+    local Player = game.Players:GetPlayerFromCharacter(child)
+    Markers[Player.Name] = nil
     if Player ~= nil then
         Player.Backpack.ChildAdded:Connect(BackpackChanged)
         Player.Backpack.ChildRemoved:Connect(function(removed)
             BackpackChanged(removed, Player)
         end)
+        child.ChildRemoved:Connect(function(removed)
+            BackpackChanged(removed, Player)
+        end)
     end
+    wait(1)
+    if Player.Backpack:FindFirstChildOfClass("Tool") then
+        BackpackChanged(Player.Backpack:FindFirstChildOfClass("Tool"))
+    elseif Player.Character ~= nil and Player.Character:FindFirstChildOfClass("Tool") then
+        BackpackChanged(Player.Character:FindFirstChildOfClass("Tool"))
+     end
 end
 
 local function PlayerAdded(child)
-    --print("new player",child)
     repeat wait() until child:FindFirstChild("Backpack")
     repeat wait() until child.Character ~= nil
     child.Backpack.ChildAdded:Connect(BackpackChanged)
     child.Backpack.ChildRemoved:Connect(function(removed)
         BackpackChanged(removed, child)
     end)
+    child.Character.ChildRemoved:Connect(function(removed)
+        BackpackChanged(removed, child)
+    end)
     child.CharacterAdded:Connect(CharacterAdded)
-    --print("new player set up")
 end
 
 local function PlayerRemoved(child)
@@ -214,6 +231,11 @@ for i,v in pairs(game.Players:GetPlayers()) do
         v.Backpack.ChildRemoved:Connect(function(removed)
             BackpackChanged(removed, v)
         end)
+        if v.Character ~= nil then
+            v.Character.ChildRemoved:Connect(function(removed)
+                BackpackChanged(removed, v)
+            end)
+        end
         -- repeat wait() until v.Character ~= nil
         v.CharacterAdded:Connect(CharacterAdded)
     end
