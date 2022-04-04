@@ -155,7 +155,7 @@ local function CharacterAdded(child)
 end
 
 local function PlayerAdded(child)
-    print("new player",child)
+    --print("new player",child)
     repeat wait() until child:FindFirstChild("Backpack")
     repeat wait() until child.Character ~= nil
     child.Backpack.ChildAdded:Connect(BackpackChanged)
@@ -163,7 +163,7 @@ local function PlayerAdded(child)
         BackpackChanged(removed, child)
     end)
     child.CharacterAdded:Connect(CharacterAdded)
-    print("new player set up")
+    --print("new player set up")
 end
 
 local function PlayerRemoved(child)
