@@ -78,6 +78,9 @@ local function BackpackChanged(child, PlayerForRemoved)
     local ContrabandFound = false
     local Level = 0
     local Player = PlayerForRemoved or child.Parent.Parent
+    if Player == nil or not Player:IsA("Player") then
+        return
+    end
     if tostring(Player.Team) == "Department of Corrections" or tostring(Player.Team) == "Criminal" then
         return
     end
